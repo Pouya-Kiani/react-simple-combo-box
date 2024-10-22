@@ -18,13 +18,12 @@ import {
 } from './ComboBox.styled'
 import { targetIsCheckbox } from '../../utils/typeUtils'
 
-export default forwardRef<HTMLInputElement, ComboBoxProps<string>>(
+export default forwardRef<HTMLInputElement, ComboBoxProps>(
   function ComboBox(props, ref) {
     const inputRef = useRef<HTMLInputElement>(null)
     const searchBoxRef = useRef<HTMLInputElement>(null)
 
-    const { name, options, onAddOption, ...inputProps } =
-      props as ComboBoxProps<string>
+    const { name, options, onAddOption, ...inputProps } = props as ComboBoxProps
 
     const [searchKeyword, setSearchKeyword] = useState<string>('')
     const [selected, setSelected] = useState<string[]>([])
@@ -72,7 +71,7 @@ export default forwardRef<HTMLInputElement, ComboBoxProps<string>>(
     const filteredOptions = useMemo(() => {
       if (!options?.length) return []
       if (!searchKeyword) return options
-      return options.filter((option) => option.includes(searchKeyword))
+      return options.filter(({ value }) => value.includes(searchKeyword))
     }, [options, searchKeyword])
 
     const handleAddOption = (value: string) => {
@@ -80,7 +79,7 @@ export default forwardRef<HTMLInputElement, ComboBoxProps<string>>(
         console.warn('onAddOption is not a valid function, component: ', name)
         return
       }
-      onAddOption(value)
+      onAddOption({ label: value, value })
       handleSelect(value)
       if (searchBoxRef.current) searchBoxRef.current.value = ''
       setSearchKeyword('')
@@ -131,12 +130,13 @@ export default forwardRef<HTMLInputElement, ComboBoxProps<string>>(
           onChange={handleSelectOption}
         >
           {filteredOptions?.length ? (
-            filteredOptions.map((option) => (
+            filteredOptions.map(({ label, value }) => (
               <DropdownMenuOption
-                value={option}
-                isSelected={isSelected(option)}
+                label={label}
+                value={value}
+                isSelected={isSelected(value)}
                 selected={selected}
-                key={`option-${option}`}
+                key={`option-${value}`}
                 // handleChange={handleSelectItem}
               />
             ))
@@ -159,8 +159,8 @@ export default forwardRef<HTMLInputElement, ComboBoxProps<string>>(
 
 export function DropdownMenuOption({
   value,
-  // selected,
   isSelected,
+  label,
   ...componentProps
 }: DropdownMenuOptionProps) {
   return (
@@ -174,7 +174,7 @@ export function DropdownMenuOption({
           value={value}
           id={`option-${value}`}
         />
-        {value}
+        {label}
       </label>
     </DropdownMenuOptionWrapper>
   )
