@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://Pouya-Kiani.github.io/react-simple-combo-box/",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -10,7 +11,9 @@
     "preview": "vite preview",
     "format": "prettier --write ./src",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "react": "^18.3.1",
