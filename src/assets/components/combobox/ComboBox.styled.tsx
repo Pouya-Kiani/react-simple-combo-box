@@ -25,6 +25,7 @@ export const DropdownMenuWrapper = styled.ul`
   border-radius: 0.5em;
   height: auto;
   list-style: none;
+  z-index: 2;
 `
 
 export const DropdownMenuOptionWrapper = styled.li`
@@ -66,8 +67,9 @@ export const BadgeDisplay = styled.label`
   display: flex;
   flex-direction: row;
   overflow: hidden;
+  gap: 0.25em;
 `
-export const Badge = styled.button`
+export const Badge = styled.button.attrs(() => ({ type: 'button' }))`
   border: none;
   outline: none !important;
   margin: 0%;
@@ -77,7 +79,6 @@ export const Badge = styled.button`
   border-radius: 1em;
   border: 1px solid var(--active-color);
 `
-
 export const Wrapper = styled.div.attrs<{
   $height?: string
   $rounded?: string
@@ -88,12 +89,12 @@ export const Wrapper = styled.div.attrs<{
   $size: props?.$size || '14px',
 }))`
   position: relative;
-  isolation: isolate;
+  /* isolation: isolate; */
   display: block;
   color: black;
+  margin-block-end: 1em;
   & * {
     color: inherit;
-    /* font-size: inherit; */
   }
   background-color: var(--paper-background);
   height: ${(props) => props.$height};
@@ -113,13 +114,13 @@ export const Wrapper = styled.div.attrs<{
     pointer-events: none;
     top: calc(${(props) => props.$height} + 0.75em);
   }
-  &:has(${SearchInput}:focus,${DropdownMenuWrapper}:hover) {
+  // prettier-ignore
+  &:has(${SearchInput}:focus,${DropdownMenuWrapper}:hover,${SearchInput}:not(:placeholder-shown),${DropdownMenuWrapper}:focus,${DropdownMenuOptionWrapper}:focus) {
     overflow: visible;
     border-color: blue;
     box-shadow: 0px 0px 3px 2px var(--active-color);
     & > ${SearchInput} {
       opacity: 1;
-      /* display: initial; */
     }
     & > ${BadgeDisplay} {
       opacity: 0;
@@ -128,25 +129,15 @@ export const Wrapper = styled.div.attrs<{
       max-height: 150px;
       overflow: scroll;
       pointer-events: all;
-      /* min-height: 80px; */
     }
   }
-  &:has(${SearchInput}:not(:placeholder-shown)) {
-    overflow: visible;
-    border-color: blue;
-    box-shadow: 0px 0px 3px 2px var(--active-color);
-    & > ${SearchInput} {
-      opacity: 1;
-      /* display: initial; */
-    }
-    & > ${BadgeDisplay} {
-      opacity: 0;
-    }
-    & > ${DropdownMenuWrapper} {
-      max-height: 150px;
-      overflow: scroll;
-      pointer-events: all;
-      /* min-height: 80px; */
-    }
-  }
+`
+export const InputLabel = styled.label`
+  text-align: start;
+  text-transform: capitalize;
+  display: inline-block;
+  width: 100%;
+  margin-block-end: 6px;
+  font-size: 1.2rem;
+  font-weight: 500;
 `

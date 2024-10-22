@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   useMemo,
+  useEffect,
 } from 'react'
 import { ComboBoxProps, DropdownMenuOptionProps } from './types'
 import useDebouncedCallback from '../../hooks/useDebouncedCallback'
@@ -13,32 +14,65 @@ import {
   BadgeDisplay,
   DropdownMenuOptionWrapper,
   DropdownMenuWrapper,
+  InputLabel,
   SearchInput,
   Wrapper,
 } from './ComboBox.styled'
 import { targetIsCheckbox } from '../../utils/typeUtils'
+import { isControlled } from './ComboBox.hooks'
 
 export default forwardRef<HTMLInputElement, ComboBoxProps>(
   function ComboBox(props, ref) {
     const inputRef = useRef<HTMLInputElement>(null)
     const searchBoxRef = useRef<HTMLInputElement>(null)
 
-    const { name, options, onAddOption, ...inputProps } = props as ComboBoxProps
+    const {
+      name,
+      options,
+      onSelect,
+      selected: parentSelected,
+      onAddOption,
+      label,
+      placeholder = 'please select or type to search',
+      ...inputProps
+    } = props as ComboBoxProps
 
     const [searchKeyword, setSearchKeyword] = useState<string>('')
     const [selected, setSelected] = useState<string[]>([])
 
+    useEffect(() => {
+      if (!isControlled(props)) return
+      setSelected(parentSelected || [])
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [parentSelected])
+
+    const handleInputValueChange: ChangeEventHandler<HTMLInputElement> = (
+      event
+    ) => {
+      if (!isControlled(props)) return
+      const value = event?.target?.value
+      const parsedValue = value.split(',')
+      setSelected(parsedValue || [])
+    }
+
     // handlers
     const handleSelect = (value: string) => {
-      setSelected((prev) => Array.from(new Set(prev).add(value)))
+      if (isControlled(props))
+        onSelect?.(Array.from(new Set(parentSelected).add(value)), value)
+      else setSelected((prev) => Array.from(new Set(prev).add(value)))
     }
-    const handleDeselect = (value: string) =>
-      setSelected((prev) => {
-        console.log(prev)
-        const selectedSet = new Set(prev)
+    const handleDeselect = (value: string) => {
+      if (isControlled(props)) {
+        const selectedSet = new Set(parentSelected)
         selectedSet.delete(value)
-        return Array.from(selectedSet)
-      })
+        onSelect?.(Array.from(selectedSet), value)
+      } else
+        setSelected((prev) => {
+          const selectedSet = new Set(prev)
+          selectedSet.delete(value)
+          return Array.from(selectedSet)
+        })
+    }
 
     const handleSelectOption: ChangeEventHandler<HTMLUListElement> = (
       event
@@ -85,74 +119,78 @@ export default forwardRef<HTMLInputElement, ComboBoxProps>(
       setSearchKeyword('')
     }
     return (
-      <Wrapper $size="18px">
-        <input
-          type="hidden"
-          name={name}
-          ref={inputRef}
-          {...inputProps}
-          onFocus={() => focus?.()}
-        />
-        <SearchInput
-          id="searchBoxRef"
-          ref={searchBoxRef}
-          aria-autocomplete="list"
-          role="combobox"
-          aria-haspopup
-          aria-expanded
-          aria-controls="options"
-          onChange={handleSearch}
-          placeholder=" "
-        />
-        <BadgeDisplay htmlFor="searchBoxRef">
-          {selected?.length
-            ? selected
-                .filter((_, index) => index > selected.length - 3)
-                .map((option, idx) => (
+      <>
+        <InputLabel>{label}</InputLabel>
+        <Wrapper $size="18px">
+          <input
+            {...inputProps}
+            type="hidden"
+            name={name}
+            ref={inputRef}
+            value={selected.join(',')}
+            onChange={handleInputValueChange}
+            onFocus={() => focus?.()}
+          />
+          <SearchInput
+            id={`searchbox-element-${name}`}
+            ref={searchBoxRef}
+            aria-autocomplete="list"
+            role="combobox"
+            aria-haspopup
+            aria-expanded
+            aria-controls="options"
+            aria-readonly
+            onChange={handleSearch}
+            placeholder=" "
+          />
+          <BadgeDisplay htmlFor={`searchbox-element-${name}`}>
+            {selected?.length
+              ? selected.map((option, idx) => (
                   <Badge
                     key={`input-${name}-option-badge-${idx}`}
                     onClick={(e) => {
                       console.log(e, option)
                       e.stopPropagation()
+                      e.preventDefault()
                       handleDeselect(option)
                     }}
                   >
                     {option}
                   </Badge>
                 ))
-            : 'Label'}
-        </BadgeDisplay>
-        <DropdownMenuWrapper
-          id={'options'}
-          role="listbox"
-          tabIndex={0}
-          aria-multiselectable
-          onChange={handleSelectOption}
-        >
-          {filteredOptions?.length ? (
-            filteredOptions.map(({ label, value }) => (
-              <DropdownMenuOption
-                label={label}
-                value={value}
-                isSelected={isSelected(value)}
-                selected={selected}
-                key={`option-${value}`}
-                // handleChange={handleSelectItem}
-              />
-            ))
-          ) : (
-            <DropdownMenuOptionWrapper>
-              <span
-                onClick={() => {
-                  handleAddOption?.(searchKeyword)
-                }}
-              >
-                {searchKeyword} not found, Add+
-              </span>
-            </DropdownMenuOptionWrapper>
-          )}
-        </DropdownMenuWrapper>
-      </Wrapper>
+              : placeholder}
+          </BadgeDisplay>
+          <DropdownMenuWrapper
+            id={`combobox-${name}-options-wrapper`}
+            role="listbox"
+            aria-multiselectable
+            onChange={handleSelectOption}
+          >
+            {filteredOptions?.length ? (
+              filteredOptions.map(({ label, value }) => (
+                <DropdownMenuOption
+                  label={label}
+                  value={value}
+                  isSelected={isSelected(value)}
+                  selected={selected}
+                  key={`option-${value}`}
+                  // handleChange={handleSelectItem}
+                />
+              ))
+            ) : (
+              <DropdownMenuOptionWrapper>
+                <span
+                  onClick={() => {
+                    handleAddOption?.(searchKeyword)
+                  }}
+                >
+                  {searchKeyword} not found, Add+
+                </span>
+              </DropdownMenuOptionWrapper>
+            )}
+          </DropdownMenuWrapper>
+        </Wrapper>
+      </>
     )
   }
 )

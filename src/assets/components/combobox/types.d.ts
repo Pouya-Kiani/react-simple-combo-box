@@ -3,8 +3,8 @@ export interface ComboBoxProps
   options: SelectOption[] | undefined
   onAddOption(value: SelectOption): void | Promise<void>
   name: string
-  // selected?: OptionType[] | undefined
-  // onSelect?(array: OptionType[], item?: OptionType): void
+  selected?: OptionType[] | undefined
+  onSelect?(array: OptionType[], item?: OptionType): void
 }
 
 export type SelectOption = { label: string; value: string }
